@@ -135,24 +135,6 @@
             max-height: 200px;
             overflow-y: auto;
         }
-        h1 {
-            color: #333;
-            margin: 0;
-            font-size: 24px;
-        }
-        h3 {
-            color: #444;
-            margin: 0 0 15px 0;
-            font-size: 18px;
-        }
-        p {
-            margin: 8px 0;
-            color: #666;
-        }
-        span {
-            color: #333;
-            font-weight: 500;
-        }
     </style>
 </head>
 <body>
@@ -215,590 +197,657 @@
     </div>
 
     <script>
-        const CONTRACT_ADDRESS = '0x3038eBDFF5C17d9B0f07871b66FCDc7B9329fCD8';
-        const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-        const BASE_CHAIN_ID = '0x2105';
-        const DEBUG_MODE = true;
-        
-        let web3;
-        let contract;
-        let usdcContract;
-        let userAddress;
+    // JavaScript code will be added in the next parts
+        // Global Constants
+    const CONTRACT_ADDRESS = '0x3038eBDFF5C17d9B0f07871b66FCDc7B9329fCD8';
+    const USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+    const BASE_CHAIN_ID = '0x2105';
+    const DEBUG_MODE = true;
+    
+    // Global Variables
+    let web3;
+    let contract;
+    let usdcContract;
+    let userAddress;
 
-        const USDC_ABI = [
-            {
-                "inputs": [
-                    {"name": "spender","type": "address"},
-                    {"name": "amount","type": "uint256"}
-                ],
-                "name": "approve",
-                "outputs": [{"name": "","type": "bool"}],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"name": "owner","type": "address"},
-                    {"name": "spender","type": "address"}
-                ],
-                "name": "allowance",
-                "outputs": [{"name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"name": "account","type": "address"}
-                ],
-                "name": "balanceOf",
-                "outputs": [{"name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ];
-
-        const CONTRACT_ABI = [
-            {
-                "inputs": [{"name": "","type": "address"}],
-                "name": "deposits",
-                "outputs": [{"name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [{"name": "","type": "address"}],
-                "name": "calculateReward",
-                "outputs": [{"name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {"name": "amount","type": "uint256"},
-                    {"name": "referralCode","type": "uint256"}
-                ],
-                "name": "depositFunds",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [{"name": "amount","type": "uint256"}],
-                "name": "withdraw",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "claimDepositReward",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "claimReferralReward",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [{"name": "","type": "address"}],
-                "name": "referralRewards",
-                "outputs": [{"name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "generateReferralCode",
-                "outputs": [{"name": "","type": "uint256"}],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            },
-            {
-                "inputs": [{"name": "","type": "address"}],
-                "name": "userToReferralCode",
-                "outputs": [{"name": "","type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": true,
-                        "name": "user",
-                        "type": "address"
-                    },
-                    {
-                        "indexed": false,
-                        "name": "referralCode",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "ReferralCodeCreated",
-                "type": "event"
-            }
-        ];
-
-        function showDebugInfo(info) {
-            if (!DEBUG_MODE) return;
-            const debugDiv = document.getElementById('debugInfo');
-            debugDiv.style.display = 'block';
-            debugDiv.innerHTML += `<div>[${new Date().toISOString()}] ${info}</div>`;
-            debugDiv.scrollTop = debugDiv.scrollHeight;
+    // USDC Token ABI Definition
+    const USDC_ABI = [
+        {
+            "inputs": [
+                {"name": "spender","type": "address"},
+                {"name": "amount","type": "uint256"}
+            ],
+            "name": "approve",
+            "outputs": [{"name": "","type": "bool"}],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {"name": "owner","type": "address"},
+                {"name": "spender","type": "address"}
+            ],
+            "name": "allowance",
+            "outputs": [{"name": "","type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {"name": "account","type": "address"}
+            ],
+            "name": "balanceOf",
+            "outputs": [{"name": "","type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
         }
+    ];
 
-        async function initWeb3() {
-            if (window.ethereum) {
-                try {
-                    web3 = new Web3(window.ethereum);
-                    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-                    usdcContract = new web3.eth.Contract(USDC_ABI, USDC_ADDRESS);
-                    
-                    document.getElementById('connectWallet').addEventListener('click', connectWallet);
-                    document.getElementById('approveButton').addEventListener('click', approveUSDC);
-                    document.getElementById('stakeButton').addEventListener('click', stake);
-                    document.getElementById('withdrawButton').addEventListener('click', withdraw);
-                    document.getElementById('claimRewardsButton').addEventListener('click', claimRewards);
-                    document.getElementById('generateReferralCode').addEventListener('click', generateReferralCode);
-                    document.getElementById('claimReferralRewards').addEventListener('click', claimReferralRewards);
-
-                    const accounts = await web3.eth.getAccounts();
-                    if (accounts.length > 0) {
-                        userAddress = accounts[0];
-                        onConnect();
-                    }
-
-                    window.ethereum.on('accountsChanged', handleAccountsChanged);
-                    window.ethereum.on('chainChanged', handleChainChanged);
-
-                    checkNetwork();
-                    showDebugInfo('Web3 initialized successfully');
-                } catch (error) {
-                    console.error("Error initializing Web3:", error);
-                    showAlert('Failed to initialize Web3: ' + error.message, 'error');
-                    showDebugInfo('Web3 initialization error: ' + error.message);
+    // Main Contract ABI Definition
+    const CONTRACT_ABI = [
+        {
+            "inputs": [{"name": "","type": "address"}],
+            "name": "deposits",
+            "outputs": [{"name": "","type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [{"name": "","type": "address"}],
+            "name": "calculateReward",
+            "outputs": [{"name": "","type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {"name": "amount","type": "uint256"},
+                {"name": "referralCode","type": "uint256"}
+            ],
+            "name": "depositFunds",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [{"name": "amount","type": "uint256"}],
+            "name": "withdraw",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "claimDepositReward",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "claimReferralReward",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [{"name": "","type": "address"}],
+            "name": "referralRewards",
+            "outputs": [{"name": "","type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "generateReferralCode",
+            "outputs": [{"name": "","type": "uint256"}],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [{"name": "","type": "address"}],
+            "name": "userToReferralCode",
+            "outputs": [{"name": "","type": "uint256"}],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "name": "user",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "name": "referralCode",
+                    "type": "uint256"
                 }
-            } else {
-                showAlert('Please install MetaMask!', 'error');
-                showDebugInfo('MetaMask not found');
-            }
+            ],
+            "name": "ReferralCodeCreated",
+            "type": "event"
         }
+    ];
 
-        async function connectWallet() {
-            if (!window.ethereum) {
-                showAlert('Please install MetaMask!', 'error');
-                return;
-            }
+    // Utility Functions
+    function showDebugInfo(info) {
+        if (!DEBUG_MODE) return;
+        const debugDiv = document.getElementById('debugInfo');
+        debugDiv.style.display = 'block';
+        debugDiv.innerHTML += `<div>[${new Date().toISOString()}] ${info}</div>`;
+        debugDiv.scrollTop = debugDiv.scrollHeight;
+    }
 
+    function showAlert(message, type) {
+        const alert = document.getElementById('alert');
+        alert.textContent = message;
+        alert.className = `alert ${type}`;
+        alert.style.display = 'block';
+        setTimeout(() => {
+            alert.style.display = 'none';
+        }, 5000);
+    }
+
+    function showLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+    }
+
+    function formatNumber(number, decimals = 2) {
+        return Number(parseFloat(number)).toLocaleString('en-US', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+     // Web3 Initialization
+    async function initWeb3() {
+        if (window.ethereum) {
             try {
-                showLoading(true);
-                const accounts = await window.ethereum.request({ method: 'eth_
-                  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                userAddress = accounts[0];
-                showDebugInfo('Wallet connected: ' + userAddress);
+                web3 = new Web3(window.ethereum);
+                contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                usdcContract = new web3.eth.Contract(USDC_ABI, USDC_ADDRESS);
                 
-                await checkAndSwitchNetwork();
-                
-                onConnect();
-                showAlert('Wallet connected successfully!', 'success');
-            } catch (error) {
-                console.error("Connection error:", error);
-                showAlert('Failed to connect wallet: ' + error.message, 'error');
-                showDebugInfo('Wallet connection error: ' + error.message);
-            } finally {
-                showLoading(false);
-            }
-        }
+                // Set up event listeners
+                document.getElementById('connectWallet').addEventListener('click', connectWallet);
+                document.getElementById('approveButton').addEventListener('click', approveUSDC);
+                document.getElementById('stakeButton').addEventListener('click', stake);
+                document.getElementById('withdrawButton').addEventListener('click', withdraw);
+                document.getElementById('claimRewardsButton').addEventListener('click', claimRewards);
+                document.getElementById('generateReferralCode').addEventListener('click', generateReferralCode);
+                document.getElementById('claimReferralRewards').addEventListener('click', claimReferralRewards);
 
-        function handleAccountsChanged(accounts) {
-            if (accounts.length === 0) {
-                userAddress = null;
-                document.getElementById('connectWallet').textContent = 'Connect Wallet';
-                document.getElementById('mainContent').style.display = 'none';
-                updateNetworkStatus(false);
-                showDebugInfo('Wallet disconnected');
-            } else if (accounts[0] !== userAddress) {
-                userAddress = accounts[0];
-                onConnect();
-                showDebugInfo('Account changed to: ' + userAddress);
-            }
-        }
-
-        function handleChainChanged(chainId) {
-            showDebugInfo('Chain changed to: ' + chainId);
-            if (chainId !== BASE_CHAIN_ID) {
-                showAlert('Please switch to BASE Network', 'error');
-                document.getElementById('mainContent').style.display = 'none';
-                updateNetworkStatus(false);
-            } else {
-                document.getElementById('mainContent').style.display = 'block';
-                updateNetworkStatus(true);
-                updateUI();
-            }
-        }
-
-        async function checkNetwork() {
-            const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-            showDebugInfo('Current chain ID: ' + chainId);
-            updateNetworkStatus(chainId === BASE_CHAIN_ID);
-            return chainId === BASE_CHAIN_ID;
-        }
-
-        function updateNetworkStatus(isCorrect) {
-            const status = document.getElementById('networkStatus');
-            if (isCorrect) {
-                status.textContent = 'BASE Network';
-                status.className = 'network-status correct';
-            } else {
-                status.textContent = 'Wrong Network';
-                status.className = 'network-status wrong';
-            }
-        }
-
-        async function checkAndSwitchNetwork() {
-            if (window.ethereum) {
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                if (chainId !== BASE_CHAIN_ID) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: BASE_CHAIN_ID }],
-                        });
-                    } catch (error) {
-                        if (error.code === 4902) {
-                            try {
-                                await window.ethereum.request({
-                                    method: 'wallet_addEthereumChain',
-                                    params: [{
-                                        chainId: BASE_CHAIN_ID,
-                                        chainName: 'Base',
-                                        nativeCurrency: {
-                                            name: 'ETH',
-                                            symbol: 'ETH',
-                                            decimals: 18
-                                        },
-                                        rpcUrls: ['https://mainnet.base.org'],
-                                        blockExplorerUrls: ['https://basescan.org']
-                                    }]
-                                });
-                            } catch (addError) {
-                                showAlert('Failed to add BASE network', 'error');
-                                showDebugInfo('Failed to add BASE network: ' + addError.message);
-                                throw addError;
-                            }
-                        } else {
-                            showAlert('Failed to switch to BASE network', 'error');
-                            showDebugInfo('Failed to switch network: ' + error.message);
-                            throw error;
-                        }
-                    }
+                // Check if already connected
+                const accounts = await web3.eth.getAccounts();
+                if (accounts.length > 0) {
+                    userAddress = accounts[0];
+                    onConnect();
                 }
-                updateNetworkStatus(true);
+
+                // Setup MetaMask event listeners
+                window.ethereum.on('accountsChanged', handleAccountsChanged);
+                window.ethereum.on('chainChanged', handleChainChanged);
+
+                // Initial network check
+                checkNetwork();
+                showDebugInfo('Web3 initialized successfully');
+            } catch (error) {
+                console.error("Error initializing Web3:", error);
+                showAlert('Failed to initialize Web3: ' + error.message, 'error');
+                showDebugInfo('Web3 initialization error: ' + error.message);
             }
+        } else {
+            showAlert('Please install MetaMask!', 'error');
+            showDebugInfo('MetaMask not found');
+        }
+    }
+
+    // Wallet Connection
+    async function connectWallet() {
+        if (!window.ethereum) {
+            showAlert('Please install MetaMask!', 'error');
+            return;
         }
 
-        function onConnect() {
-            document.getElementById('connectWallet').textContent = 
-                `${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+        try {
+            showLoading(true);
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            userAddress = accounts[0];
+            showDebugInfo('Wallet connected: ' + userAddress);
+            
+            await checkAndSwitchNetwork();
+            
+            onConnect();
+            showAlert('Wallet connected successfully!', 'success');
+        } catch (error) {
+            console.error("Connection error:", error);
+            showAlert('Failed to connect wallet: ' + error.message, 'error');
+            showDebugInfo('Wallet connection error: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Account Change Handler
+    function handleAccountsChanged(accounts) {
+        if (accounts.length === 0) {
+            userAddress = null;
+            document.getElementById('connectWallet').textContent = 'Connect Wallet';
+            document.getElementById('mainContent').style.display = 'none';
+            updateNetworkStatus(false);
+            showDebugInfo('Wallet disconnected');
+        } else if (accounts[0] !== userAddress) {
+            userAddress = accounts[0];
+            onConnect();
+            showDebugInfo('Account changed to: ' + userAddress);
+        }
+    }
+
+    // Chain Change Handler
+    function handleChainChanged(chainId) {
+        showDebugInfo('Chain changed to: ' + chainId);
+        if (chainId !== BASE_CHAIN_ID) {
+            showAlert('Please switch to BASE Network', 'error');
+            document.getElementById('mainContent').style.display = 'none';
+            updateNetworkStatus(false);
+        } else {
             document.getElementById('mainContent').style.display = 'block';
+            updateNetworkStatus(true);
             updateUI();
         }
+    }
 
-        async function updateUI() {
-            if (!userAddress) return;
-            
-            try {
-                showLoading(true);
-                
-                // Get USDC balance
-                const balance = await usdcContract.methods.balanceOf(userAddress).call();
-                document.getElementById('userBalance').textContent = 
-                    formatNumber(web3.utils.fromWei(balance, 'mwei'));
-                showDebugInfo('USDC Balance: ' + web3.utils.fromWei(balance, 'mwei'));
+    // Network Status Functions
+    async function checkNetwork() {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        showDebugInfo('Current chain ID: ' + chainId);
+        updateNetworkStatus(chainId === BASE_CHAIN_ID);
+        return chainId === BASE_CHAIN_ID;
+    }
 
-                // Get staked amount
-                const staked = await contract.methods.deposits(userAddress).call();
-                document.getElementById('stakedAmount').textContent = 
-                    formatNumber(web3.utils.fromWei(staked, 'mwei'));
-                showDebugInfo('Staked Amount: ' + web3.utils.fromWei(staked, 'mwei'));
-
-                // Get pending rewards
-                const rewards = await contract.methods.calculateReward(userAddress).call();
-                document.getElementById('pendingRewards').textContent = 
-                    formatNumber(web3.utils.fromWei(rewards, 'mwei'));
-                showDebugInfo('Pending Rewards: ' + web3.utils.fromWei(rewards, 'mwei'));
-
-                // Get referral rewards
-                const referralRewards = await contract.methods.referralRewards(userAddress).call();
-                document.getElementById('referralRewards').textContent = 
-                    formatNumber(web3.utils.fromWei(referralRewards, 'mwei'));
-                showDebugInfo('Referral Rewards: ' + web3.utils.fromWei(referralRewards, 'mwei'));
-
-                // Update referral code
-                await updateReferralCode();
-
-            } catch (error) {
-                console.error('Error updating UI:', error);
-                showAlert('Error updating data', 'error');
-                showDebugInfo('UI update error: ' + error.message);
-            } finally {
-                showLoading(false);
-            }
+    function updateNetworkStatus(isCorrect) {
+        const status = document.getElementById('networkStatus');
+        if (isCorrect) {
+            status.textContent = 'BASE Network';
+            status.className = 'network-status correct';
+        } else {
+            status.textContent = 'Wrong Network';
+            status.className = 'network-status wrong';
         }
+    }
 
-        async function updateReferralCode() {
-            if (!userAddress) return;
-            
-            try {
-                const code = await contract.methods.userToReferralCode(userAddress).call();
-                if (code !== '0') {
-                    document.getElementById('yourReferralCode').textContent = code;
-                }
-            } catch (error) {
-                console.error('Error updating referral code:', error);
-                showDebugInfo('Error updating referral code: ' + error.message);
-            }
-        }
-
-        async function approveUSDC() {
-            if (!userAddress) return;
-            
-            const amount = document.getElementById('stakeAmount').value;
-            if (!amount || amount <= 0) {
-                showAlert('Please enter a valid amount', 'error');
-                return;
-            }
-            
-            try {
-                showLoading(true);
-                const amountWei = web3.utils.toWei(amount, 'mwei');
-                showDebugInfo('Approving amount: ' + amount + ' USDC');
-
-                // Check current allowance
-                const currentAllowance = await usdcContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
-                showDebugInfo('Current allowance: ' + web3.utils.fromWei(currentAllowance, 'mwei') + ' USDC');
-
-                if (web3.utils.toBN(currentAllowance).gte(web3.utils.toBN(amountWei))) {
-                    showAlert('Approval already sufficient', 'success');
-                    showDebugInfo('Existing approval sufficient');
-                    return;
-                }
-
-                const tx = await usdcContract.methods.approve(CONTRACT_ADDRESS, amountWei)
-                    .send({ 
-                        from: userAddress,
-                        gasPrice: await web3.eth.getGasPrice(),
-                        gas: 100000
+    // Network Switching
+    async function checkAndSwitchNetwork() {
+        if (window.ethereum) {
+            const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+            if (chainId !== BASE_CHAIN_ID) {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: BASE_CHAIN_ID }],
                     });
-                showAlert('USDC approved successfully', 'success');
-                showDebugInfo('Approval transaction: ' + tx.transactionHash);
-            } catch (error) {
-                console.error('Approval error:', error);
-                showAlert('Failed to approve: ' + error.message, 'error');
-                showDebugInfo('Approval error: ' + error.message);
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        async function stake() {
-            if (!userAddress) return;
-            
-            const amount = document.getElementById('stakeAmount').value;
-            const referralCode = document.getElementById('referralCode').value || '0';
-            
-            if (!amount || amount <= 0) {
-                showAlert('Please enter a valid amount', 'error');
-                return;
-            }
-
-            try {
-                showLoading(true);
-                const amountWei = web3.utils.toWei(amount, 'mwei');
-                showDebugInfo('Attempting to stake: ' + amount + ' USDC');
-
-                const tx = await contract.methods.depositFunds(amountWei, referralCode)
-                    .send({ 
-                        from: userAddress,
-                        gasPrice: await web3.eth.getGasPrice(),
-                        gas: 250000
-                    });
-                showAlert('Staking successful', 'success');
-                showDebugInfo('Stake transaction: ' + tx.transactionHash);
-                updateUI();
-            } catch (error) {
-                console.error('Staking error:', error);
-                let errorMessage = error.message;
-                if (error.message.includes('paused')) {
-                    errorMessage = 'Staking is currently paused';
-                } else if (error.message.includes('amount too low')) {
-                    errorMessage = 'Deposit amount is below minimum requirement';
+                } catch (error) {
+                    if (error.code === 4902) {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: BASE_CHAIN_ID,
+                                    chainName: 'Base',
+                                    nativeCurrency: {
+                                        name: 'ETH',
+                                        symbol: 'ETH',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: ['https://mainnet.base.org'],
+                                    blockExplorerUrls: ['https://basescan.org']
+                                }]
+                            });
+                        } catch (addError) {
+                            showAlert('Failed to add BASE network', 'error');
+                            showDebugInfo('Failed to add BASE network: ' + addError.message);
+                            throw addError;
+                        }
+                    } else {
+                        showAlert('Failed to switch to BASE network', 'error');
+                        showDebugInfo('Failed to switch network: ' + error.message);
+                        throw error;
+                    }
                 }
-                showAlert('Failed to stake: ' + errorMessage, 'error');
-                showDebugInfo('Stake error: ' + errorMessage);
-            } finally {
-                showLoading(false);
             }
+            updateNetworkStatus(true);
         }
+    }
 
-        async function withdraw() {
-            if (!userAddress) return;
+    // Connection Success Handler
+    function onConnect() {
+        document.getElementById('connectWallet').textContent = 
+            `${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+        document.getElementById('mainContent').style.display = 'block';
+        updateUI();
+    }
+       // UI Update Function
+    async function updateUI() {
+        if (!userAddress) return;
+        
+        try {
+            showLoading(true);
             
-            const amount = document.getElementById('withdrawAmount').value;
-            if (!amount || amount <= 0) {
-                showAlert('Please enter a valid amount', 'error');
+            // Get USDC balance
+            const balance = await usdcContract.methods.balanceOf(userAddress).call();
+            document.getElementById('userBalance').textContent = 
+                formatNumber(web3.utils.fromWei(balance, 'mwei'));
+            showDebugInfo('USDC Balance: ' + web3.utils.fromWei(balance, 'mwei'));
+
+            // Get staked amount
+            const staked = await contract.methods.deposits(userAddress).call();
+            document.getElementById('stakedAmount').textContent = 
+                formatNumber(web3.utils.fromWei(staked, 'mwei'));
+            showDebugInfo('Staked Amount: ' + web3.utils.fromWei(staked, 'mwei'));
+
+            // Get pending rewards
+            const rewards = await contract.methods.calculateReward(userAddress).call();
+            document.getElementById('pendingRewards').textContent = 
+                formatNumber(web3.utils.fromWei(rewards, 'mwei'));
+            showDebugInfo('Pending Rewards: ' + web3.utils.fromWei(rewards, 'mwei'));
+
+            // Get referral rewards
+            const referralRewards = await contract.methods.referralRewards(userAddress).call();
+            document.getElementById('referralRewards').textContent = 
+                formatNumber(web3.utils.fromWei(referralRewards, 'mwei'));
+            showDebugInfo('Referral Rewards: ' + web3.utils.fromWei(referralRewards, 'mwei'));
+
+            // Update referral code
+            await updateReferralCode();
+
+        } catch (error) {
+            console.error('Error updating UI:', error);
+            showAlert('Error updating data', 'error');
+            showDebugInfo('UI update error: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // USDC Approval
+    async function approveUSDC() {
+        if (!userAddress) return;
+        
+        const amount = document.getElementById('stakeAmount').value;
+        if (!amount || amount <= 0) {
+            showAlert('Please enter a valid amount', 'error');
+            return;
+        }
+        
+        try {
+            showLoading(true);
+            const amountWei = web3.utils.toWei(amount, 'mwei');
+            showDebugInfo('Approving amount: ' + amount + ' USDC');
+
+            // Check current allowance
+            const currentAllowance = await usdcContract.methods.allowance(userAddress, CONTRACT_ADDRESS).call();
+            showDebugInfo('Current allowance: ' + web3.utils.fromWei(currentAllowance, 'mwei') + ' USDC');
+
+            if (web3.utils.toBN(currentAllowance).gte(web3.utils.toBN(amountWei))) {
+                showAlert('Approval already sufficient', 'success');
+                showDebugInfo('Existing approval sufficient');
                 return;
             }
 
-            try {
-                showLoading(true);
-                const amountWei = web3.utils.toWei(amount, 'mwei');
-                showDebugInfo('Attempting to withdraw: ' + amount + ' USDC');
-                
-                const tx = await contract.methods.withdraw(amountWei)
-                    .send({ 
-                        from: userAddress,
-                        gasPrice: await web3.eth.getGasPrice(),
-                        gas: 200000
-                    });
-                showAlert('Withdrawal successful', 'success');
-                showDebugInfo('Withdrawal transaction: ' + tx.transactionHash);
-                updateUI();
-            } catch (error) {
-                console.error('Withdrawal error:', error);
-                showAlert('Failed to withdraw: ' + error.message, 'error');
-                showDebugInfo('Withdrawal error: ' + error.message);
-            } finally {
-                showLoading(false);
-            }
+            const tx = await usdcContract.methods.approve(CONTRACT_ADDRESS, amountWei)
+                .send({ 
+                    from: userAddress,
+                    gasPrice: await web3.eth.getGasPrice(),
+                    gas: 100000
+                });
+            showAlert('USDC approved successfully', 'success');
+            showDebugInfo('Approval transaction: ' + tx.transactionHash);
+        } catch (error) {
+            console.error('Approval error:', error);
+            showAlert('Failed to approve: ' + error.message, 'error');
+            showDebugInfo('Approval error: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Staking Function
+    async function stake() {
+        if (!userAddress) return;
+        
+        const amount = document.getElementById('stakeAmount').value;
+        const referralCode = document.getElementById('referralCode').value || '0';
+        
+        if (!amount || amount <= 0) {
+            showAlert('Please enter a valid amount', 'error');
+            return;
         }
 
-        async function claimRewards() {
-            if (!userAddress) return;
+        try {
+            showLoading(true);
+            const amountWei = web3.utils.toWei(amount, 'mwei');
+            showDebugInfo('Attempting to stake: ' + amount + ' USDC');
+
+            const tx = await contract.methods.depositFunds(amountWei, referralCode)
+                .send({ 
+                    from: userAddress,
+                    gasPrice: await web3.eth.getGasPrice(),
+                    gas: 250000
+                });
+            showAlert('Staking successful', 'success');
+            showDebugInfo('Stake transaction: ' + tx.transactionHash);
+            updateUI();
+        } catch (error) {
+            console.error('Staking error:', error);
+            let errorMessage = error.message;
+            if (error.message.includes('paused')) {
+                errorMessage = 'Staking is currently paused';
+            } else if (error.message.includes('amount too low')) {
+                errorMessage = 'Deposit amount is below minimum requirement';
+            }
+            showAlert('Failed to stake: ' + errorMessage, 'error');
+            showDebugInfo('Stake error: ' + errorMessage);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Withdrawal Function
+    async function withdraw() {
+        if (!userAddress) return;
+        
+        const amount = document.getElementById('withdrawAmount').value;
+        if (!amount || amount <= 0) {
+            showAlert('Please enter a valid amount', 'error');
+            return;
+        }
+
+        try {
+            showLoading(true);
+            const amountWei = web3.utils.toWei(amount, 'mwei');
+            showDebugInfo('Attempting to withdraw: ' + amount + ' USDC');
             
-            try {
-                showLoading(true);
-                showDebugInfo('Attempting to claim deposit rewards');
-                
-                const tx = await contract.methods.claimDepositReward()
-                    .send({ 
-                        from: userAddress,
-                        gasPrice: await web3.eth.getGasPrice(),
-                        gas: 200000
-                    });
-                showAlert('Rewards claimed successfully', 'success');
-                showDebugInfo('Claim rewards transaction: ' + tx.transactionHash);
-                updateUI();
-            } catch (error) {
-                console.error('Claim error:', error);
-                showAlert('Failed to claim rewards: ' + error.message, 'error');
-                showDebugInfo('Claim rewards error: ' + error.message);
-            } finally {
-                showLoading(false);
-            }
+            const tx = await contract.methods.withdraw(amountWei)
+                .send({ 
+                    from: userAddress,
+                    gasPrice: await web3.eth.getGasPrice(),
+                    gas: 200000
+                });
+            showAlert('Withdrawal successful', 'success');
+            showDebugInfo('Withdrawal transaction: ' + tx.transactionHash);
+            updateUI();
+        } catch (error) {
+            console.error('Withdrawal error:', error);
+            showAlert('Failed to withdraw: ' + error.message, 'error');
+            showDebugInfo('Withdrawal error: ' + error.message);
+        } finally {
+            showLoading(false);
         }
+    }
 
-        async function generateReferralCode() {
-            if (!userAddress) {
-                showAlert('Please connect your wallet first', 'error');
+    // Claim Rewards Function
+    async function claimRewards() {
+        if (!userAddress) return;
+        
+        try {
+            showLoading(true);
+            showDebugInfo('Attempting to claim deposit rewards');
+            
+            const tx = await contract.methods.claimDepositReward()
+                .send({ 
+                    from: userAddress,
+                    gasPrice: await web3.eth.getGasPrice(),
+                    gas: 200000
+                });
+            showAlert('Rewards claimed successfully', 'success');
+            showDebugInfo('Claim rewards transaction: ' + tx.transactionHash);
+            updateUI();
+        } catch (error) {
+            console.error('Claim error:', error);
+            showAlert('Failed to claim rewards: ' + error.message, 'error');
+            showDebugInfo('Claim rewards error: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Referral Code Generation
+    async function updateReferralCode() {
+        if (!userAddress) return;
+        
+        try {
+            const code = await contract.methods.userToReferralCode(userAddress).call();
+            if (code !== '0') {
+                document.getElementById('yourReferralCode').textContent = code;
+            }
+        } catch (error) {
+            console.error('Error updating referral code:', error);
+            showDebugInfo('Error updating referral code: ' + error.message);
+        }
+    }
+
+    async function generateReferralCode() {
+        if (!userAddress) {
+            showAlert('Please connect your wallet first', 'error');
+            return;
+        }
+        
+        try {
+            showLoading(true);
+            showDebugInfo('Attempting to generate referral code');
+
+            // Check if user already has a referral code
+            const existingCode = await contract.methods.userToReferralCode(userAddress).call();
+            if (existingCode !== '0') {
+                document.getElementById('yourReferralCode').textContent = existingCode;
+                showAlert('You already have a referral code', 'success');
+                showDebugInfo('User already has referral code: ' + existingCode);
                 return;
             }
-            
-            try {
-                showLoading(true);
-                showDebugInfo('Attempting to generate referral code');
 
-                // Check if user already has a referral code
-                const existingCode = await contract.methods.userToReferralCode(userAddress).call();
-                if (existingCode !== '0') {
-                    document.getElementById('yourReferralCode').textContent = existingCode;
-                    showAlert('You already have a referral code', 'success');
-                    showDebugInfo('User already has referral code: ' + existingCode);
-                    return;
-                }
+            // Generate new referral code
+            const tx = await contract.methods.generateReferralCode()
+                .send({ 
+                    from: userAddress,
+                    gasPrice: await web3.eth.getGasPrice(),
+                    gas: 200000
+                });
 
-                // Generate new referral code
-                const tx = await contract.methods.generateReferralCode()
-                    .send({ 
-                        from: userAddress,
-                        gasPrice: await web3.eth.getGasPrice(),
-                        gas: 200000
-                    });
-
-                // Get the generated code from event logs
-                const event = tx.events.ReferralCodeCreated;
-                if (event) {
-                    const generatedCode = event.returnValues.referralCode;
-                    document.getElementById('yourReferralCode').textContent = generatedCode;
-                    showAlert('Referral code generated successfully', 'success');
-                    showDebugInfo('Generated referral code: ' + generatedCode);
-                } else {
-                    throw new Error('Failed to get referral code from transaction');
-                }
-
-                updateUI();
-            } catch (error) {
-                console.error('Generate referral code error:', error);
-                showAlert('Failed to generate referral code: ' + error.message, 'error');
-                showDebugInfo('Generate referral code error: ' + error.message);
-            } finally {
-                showLoading(false);
+            // Get the generated code from event logs
+            const event = tx.events.ReferralCodeCreated;
+            if (event) {
+                const generatedCode = event.returnValues.referralCode;
+                document.getElementById('yourReferralCode').textContent = generatedCode;
+                showAlert('Referral code generated successfully', 'success');
+                showDebugInfo('Generated referral code: ' + generatedCode);
+            } else {
+                throw new Error('Failed to get referral code from transaction');
             }
-        }
 
-        async function claimReferralRewards() {
-            if (!userAddress) return;
+            updateUI();
+        } catch (error) {
+            console.error('Generate referral code error:', error);
+            showAlert('Failed to generate referral code: ' + error.message, 'error');
+            showDebugInfo('Generate referral code error: ' + error.message);
+        } finally {
+            showLoading(false);
+        }
+    }
+        // Claim Referral Rewards Function
+    async function claimReferralRewards() {
+        if (!userAddress) return;
+        
+        try {
+            showLoading(true);
+            showDebugInfo('Attempting to claim referral rewards');
             
-            try {
-                showLoading(true);
-                showDebugInfo('Attempting to claim referral rewards');
-                
-                const tx = await contract.methods.claimReferralReward()
-                    .send({ 
-                        from: userAddress,
-                        gasPrice: await web3.eth.getGasPrice(),
-                        gas: 200000
-                    });
-                showAlert('Referral rewards claimed successfully', 'success');
-                showDebugInfo('Claim referral rewards transaction: ' + tx.transactionHash);
-                updateUI();
-            } catch (error) {
-                console.error('Referral claim error:', error);
-                showAlert('Failed to claim referral rewards: ' + error.message, 'error');
-                showDebugInfo('Claim referral rewards error: ' + error.message);
-            } finally {
-                showLoading(false);
-            }
+            const tx = await contract.methods.claimReferralReward()
+                .send({ 
+                    from: userAddress,
+                    gasPrice: await web3.eth.getGasPrice(),
+                    gas: 200000
+                });
+            showAlert('Referral rewards claimed successfully', 'success');
+            showDebugInfo('Claim referral rewards transaction: ' + tx.transactionHash);
+            updateUI();
+        } catch (error) {
+            console.error('Referral claim error:', error);
+            showAlert('Failed to claim referral rewards: ' + error.message, 'error');
+            showDebugInfo('Claim referral rewards error: ' + error.message);
+        } finally {
+            showLoading(false);
         }
+    }
 
-        function showAlert(message, type) {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.className = `alert ${type}`;
-            alert.style.display = 'block';
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 5000);
+    // Error Handler Function
+    function handleError(error, context) {
+        console.error(`${context} error:`, error);
+        
+        let errorMessage = error.message;
+        if (error.code === 4001) {
+            errorMessage = 'Transaction rejected by user';
+        } else if (error.code === -32603) {
+            errorMessage = 'Internal JSON-RPC error';
+            showDebugInfo('Possible gas estimation failure or contract revert');
         }
+        
+        showAlert(`Failed to ${context}: ${errorMessage}`, 'error');
+        showDebugInfo(`${context} error: ${errorMessage}`);
+    }
 
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
+    // Transaction Parameter Helper
+    async function getTransactionParams() {
+        try {
+            const gasPrice = await web3.eth.getGasPrice();
+            return {
+                from: userAddress,
+                gasPrice: gasPrice,
+            };
+        } catch (error) {
+            showDebugInfo('Error getting gas price: ' + error.message);
+            throw error;
         }
+    }
 
-        function formatNumber(number, decimals = 2) {
-            return Number(parseFloat(number)).toLocaleString('en-US', {
-                minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals
-            });
+    // Amount Validation Helper
+    function validateAmount(amount, context = 'amount') {
+        if (!amount || isNaN(amount) || amount <= 0) {
+            showAlert(`Please enter a valid ${context}`, 'error');
+            return false;
         }
+        return true;
+    }
 
-        // Initialize on page load
-        window.addEventListener('load', initWeb3);
+    // Initialize application
+    window.addEventListener('load', initWeb3);
+
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && userAddress) {
+            updateUI();
+            showDebugInfo('UI updated due to page visibility change');
+        }
+    });
+
     </script>
 </body>
 </html>
-          
