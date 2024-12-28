@@ -539,31 +539,40 @@
         updateUI();
     }
        // UI Update Function
-    async function updateUI() {
-        if (!userAddress) return;
+// 新しいコード：
+async function updateUI() {
+    if (!userAddress) return;
+    
+    try {
+        showLoading(true);
         
-        try {
-            showLoading(true);
-            
-            // Get USDC balance
-            const balance = await usdcContract.methods.balanceOf(userAddress).call();
-            document.getElementById('userBalance').textContent = 
-                formatNumber(web3.utils.fromWei(balance, 'mwei'));
-            showDebugInfo('USDC Balance: ' + web3.utils.fromWei(balance, 'mwei'));
+        // Get USDC balance
+        const balance = await usdcContract.methods.balanceOf(userAddress).call();
+        document.getElementById('userBalance').textContent = 
+            formatNumber(web3.utils.fromWei(balance, 'mwei'));
+        showDebugInfo('USDC Balance: ' + web3.utils.fromWei(balance, 'mwei'));
 
-            // ランク情報の取得を追加
+        // リファラル状態の確認と入力フィールドの表示制御を追加
+        const referralInfo = await contract.methods.userReferrals(userAddress).call();
+        const referralInput = document.getElementById('referralCode');
+        if (referralInput) {
+            referralInput.style.display = referralInfo.exists ? 'none' : 'block';
+        }
+
+        // Get staked amount
+        const staked = await contract.methods.deposits(userAddress).call();
+        document.getElementById('stakedAmount').textContent = 
+            formatNumber(web3.utils.fromWei(staked, 'mwei'));
+        showDebugInfo('Staked Amount: ' + web3.utils.fromWei(staked, 'mwei'));
+
+        // 以下既存のコード...
+
+              // ランク情報の取得を追加
             const rankInfo = await contract.methods.getUserRank(userAddress).call();
     document.getElementById('currentRank').textContent = rankInfo.rankName;
     document.getElementById('bonusRate').textContent = (rankInfo.bonusRate / 100).toString();
     document.getElementById('rankProgress').textContent = (rankInfo.progressToNextRank / 100).toFixed(2);
-
-
-
-            // Get staked amount
-            const staked = await contract.methods.deposits(userAddress).call();
-            document.getElementById('stakedAmount').textContent = 
-                formatNumber(web3.utils.fromWei(staked, 'mwei'));
-            showDebugInfo('Staked Amount: ' + web3.utils.fromWei(staked, 'mwei'));
+            
 
             // Get pending rewards
             const rewards = await contract.methods.calculateReward(userAddress).call();
@@ -632,45 +641,49 @@
     }
 
     // Staking Function
-    async function stake() {
-        if (!userAddress) return;
-        
-        const amount = document.getElementById('stakeAmount').value;
-        const referralCode = document.getElementById('referralCode').value || '0';
-        
-        if (!amount || amount <= 0) {
-            showAlert('Please enter a valid amount', 'error');
-            return;
-        }
-
-        try {
-            showLoading(true);
-            const amountWei = web3.utils.toWei(amount, 'mwei');
-            showDebugInfo('Attempting to stake: ' + amount + ' USDC');
-
-            const tx = await contract.methods.depositFunds(amountWei, referralCode)
-                .send({ 
-                    from: userAddress,
-                    gasPrice: await web3.eth.getGasPrice(),
-                    gas: 250000
-                });
-            showAlert('Staking successful', 'success');
-            showDebugInfo('Stake transaction: ' + tx.transactionHash);
-            updateUI();
-        } catch (error) {
-            console.error('Staking error:', error);
-            let errorMessage = error.message;
-            if (error.message.includes('paused')) {
-                errorMessage = 'Staking is currently paused';
-            } else if (error.message.includes('amount too low')) {
-                errorMessage = 'Deposit amount is below minimum requirement';
-            }
-            showAlert('Failed to stake: ' + errorMessage, 'error');
-            showDebugInfo('Stake error: ' + errorMessage);
-        } finally {
-            showLoading(false);
-        }
+// 新しいコード：
+async function stake() {
+    if (!userAddress) return;
+    
+    const amount = document.getElementById('stakeAmount').value;
+    
+    if (!amount || amount <= 0) {
+        showAlert('Please enter a valid amount', 'error');
+        return;
     }
+
+    try {
+        showLoading(true);
+        const amountWei = web3.utils.toWei(amount, 'mwei');
+        showDebugInfo('Attempting to stake: ' + amount + ' USDC');
+
+        // リファラル状態をチェックする処理を追加
+        const referralInfo = await contract.methods.userReferrals(userAddress).call();
+        const referralCode = referralInfo.exists ? '0' : (document.getElementById('referralCode').value || '0');
+        
+        const tx = await contract.methods.depositFunds(amountWei, referralCode)
+            .send({ 
+                from: userAddress,
+                gasPrice: await web3.eth.getGasPrice(),
+                gas: 250000
+            });
+        showAlert('Staking successful', 'success');
+        showDebugInfo('Stake transaction: ' + tx.transactionHash);
+        updateUI();
+    } catch (error) {
+        console.error('Staking error:', error);
+        let errorMessage = error.message;
+        if (error.message.includes('paused')) {
+            errorMessage = 'Staking is currently paused';
+        } else if (error.message.includes('amount too low')) {
+            errorMessage = 'Deposit amount is below minimum requirement';
+        }
+        showAlert('Failed to stake: ' + errorMessage, 'error');
+        showDebugInfo('Stake error: ' + errorMessage);
+    } finally {
+        showLoading(false);
+    }
+}
 
     // Withdrawal Function
     async function withdraw() {
