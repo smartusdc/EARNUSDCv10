@@ -290,6 +290,19 @@
             "stateMutability": "nonpayable",
             "type": "function"
         },
+         { //userRank
+        "inputs": [{"name": "user", "type": "address"}],
+        "name": "getUserRank",
+        "outputs": [
+            {"name": "rankId", "type": "uint256"},
+            {"name": "rankName", "type": "string"},
+            {"name": "bonusRate", "type": "uint256"},
+            {"name": "nextRankThreshold", "type": "uint256"},
+            {"name": "progressToNextRank", "type": "uint256"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
         {
             "inputs": [{"name": "","type": "address"}],
             "name": "referralRewards",
