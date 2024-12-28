@@ -397,11 +397,17 @@
                 document.getElementById('claimReferralRewards').addEventListener('click', claimReferralRewards);
 
                 // Check if already connected
-                const accounts = await web3.eth.getAccounts();
-                if (accounts.length > 0) {
-                    userAddress = accounts[0];
-                    onConnect();
-                }
+               // initWeb3関数内の該当部分（変更後）
+const accounts = await web3.eth.getAccounts();
+if (accounts.length > 0) {
+    userAddress = accounts[0];
+    // ウォレットアドレスの表示を更新
+    document.getElementById('connectWallet').textContent = 
+        `${accounts[0].slice(0,6)}...${accounts[0].slice(-4)}`;
+    // 切断ボタンを表示
+    document.getElementById('disconnectWallet').style.display = 'block';
+    onConnect();
+}
 
                 // Setup MetaMask event listeners
                 window.ethereum.on('accountsChanged', handleAccountsChanged);
