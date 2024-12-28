@@ -547,7 +547,7 @@ async function updateUI() {
     try {
         showLoading(true);
         
-        // Get USDC balance
+       // Get USDC balance
         const balance = await usdcContract.methods.balanceOf(userAddress).call();
         document.getElementById('userBalance').textContent = 
             formatNumber(web3.utils.fromWei(balance, 'mwei'));
@@ -557,8 +557,11 @@ async function updateUI() {
         const referralCode = await contract.methods.userToReferralCode(userAddress).call();
         const referralInput = document.getElementById('referralCode');
         if (referralInput) {
-            referralInput.style.display = referralCode !== '0' ? 'none' : 'block';
+            // '0'の場合は初回ユーザーなので、入力欄を表示
+            referralInput.style.display = referralCode === '0' ? 'block' : 'none';
         }
+
+       
 
         // Get staked amount
         const staked = await contract.methods.deposits(userAddress).call();
@@ -642,7 +645,6 @@ async function updateUI() {
     }
 
     // Staking Function
-// 新しいコード：
 async function stake() {
     if (!userAddress) return;
     
@@ -658,11 +660,12 @@ async function stake() {
         const amountWei = web3.utils.toWei(amount, 'mwei');
         showDebugInfo('Attempting to stake: ' + amount + ' USDC');
 
-        // リファラル状態をチェックする処理を追加
-        // 変更後：
-const existingReferralCode = await contract.methods.userToReferralCode(userAddress).call();
-const referralCode = existingReferralCode !== '0' ? '0' : (document.getElementById('referralCode').value || '0');
-        
+        // リファラル状態をチェック
+        const existingReferralCode = await contract.methods.userToReferralCode(userAddress).call();
+        // '0'の場合は初回ユーザーなので、入力値を使用
+        const referralCode = existingReferralCode === '0' ? 
+            (document.getElementById('referralCode').value || '0') : '0';
+
         const tx = await contract.methods.depositFunds(amountWei, referralCode)
             .send({ 
                 from: userAddress,
