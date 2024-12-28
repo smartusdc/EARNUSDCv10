@@ -43,9 +43,6 @@
             margin: 0 5px;
             transition: background-color 0.3s;
         }
-        .button.secondary {
-    background: #666;
-}
         .button:hover {
             background: #45a049;
         }
@@ -144,13 +141,10 @@
     <div class="container">
         <div class="header">
             <h1>USDC Staking Platform</h1>
-           <div style="display: flex; align-items: center;">
-    <span id="networkStatus" class="network-status"></span>
-    <div style="display: flex; gap: 8px; align-items: center;">
-        <button id="connectWallet" class="button">Connect Wallet</button>
-        <button id="disconnectWallet" class="button secondary" style="display: none;">Disconnect</button>
-    </div>
-</div>
+            <div style="display: flex; align-items: center;">
+                <span id="networkStatus" class="network-status"></span>
+                <button id="connectWallet" class="button">Connect Wallet</button>
+            </div>
         </div>
 
         <div id="alert" class="alert"></div>
@@ -388,7 +382,6 @@
                 
                 // Set up event listeners
                 document.getElementById('connectWallet').addEventListener('click', connectWallet);
-                document.getElementById('disconnectWallet').addEventListener('click', disconnectWallet);
                 document.getElementById('approveButton').addEventListener('click', approveUSDC);
                 document.getElementById('stakeButton').addEventListener('click', stake);
                 document.getElementById('withdrawButton').addEventListener('click', withdraw);
@@ -397,17 +390,11 @@
                 document.getElementById('claimReferralRewards').addEventListener('click', claimReferralRewards);
 
                 // Check if already connected
-               // initWeb3関数内の該当部分（変更後）
-const accounts = await web3.eth.getAccounts();
-if (accounts.length > 0) {
-    userAddress = accounts[0];
-    // ウォレットアドレスの表示を更新
-    document.getElementById('connectWallet').textContent = 
-        `${accounts[0].slice(0,6)}...${accounts[0].slice(-4)}`;
-    // 切断ボタンを表示
-    document.getElementById('disconnectWallet').style.display = 'block';
-    onConnect();
-}
+                const accounts = await web3.eth.getAccounts();
+                if (accounts.length > 0) {
+                    userAddress = accounts[0];
+                    onConnect();
+                }
 
                 // Setup MetaMask event listeners
                 window.ethereum.on('accountsChanged', handleAccountsChanged);
@@ -453,36 +440,20 @@ if (accounts.length > 0) {
         }
     }
 
-// 新しく追加する関数
-async function disconnectWallet() {
-    userAddress = null;
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('connectWallet').textContent = 'Connect Wallet';
-    document.getElementById('disconnectWallet').style.display = 'none';
-    updateNetworkStatus(false);
-    showAlert('Wallet disconnected successfully', 'success');
-}
-        
-
     // Account Change Handler
-function handleAccountsChanged(accounts) {
-    if (accounts.length === 0) {
-        // アカウントが存在しない場合（切断された場合）
-        disconnectWallet(); // 新しい切断関数を呼び出し
-    } else if (accounts[0] !== userAddress) {
-        // 新しいアカウントに切り替わった場合
-        userAddress = accounts[0];
-        // ウォレットアドレスの表示を更新
-        document.getElementById('connectWallet').textContent = 
-            `${accounts[0].slice(0,6)}...${accounts[0].slice(-4)}`;
-        // 切断ボタンを表示
-        document.getElementById('disconnectWallet').style.display = 'block';
-        // 既存の接続処理を実行
-        onConnect();
-        showDebugInfo('Account changed to: ' + userAddress);
+    function handleAccountsChanged(accounts) {
+        if (accounts.length === 0) {
+            userAddress = null;
+            document.getElementById('connectWallet').textContent = 'Connect Wallet';
+            document.getElementById('mainContent').style.display = 'none';
+            updateNetworkStatus(false);
+            showDebugInfo('Wallet disconnected');
+        } else if (accounts[0] !== userAddress) {
+            userAddress = accounts[0];
+            onConnect();
+            showDebugInfo('Account changed to: ' + userAddress);
+        }
     }
-}
-
 
     // Chain Change Handler
     function handleChainChanged(chainId) {
