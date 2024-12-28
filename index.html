@@ -538,6 +538,14 @@
                 formatNumber(web3.utils.fromWei(balance, 'mwei'));
             showDebugInfo('USDC Balance: ' + web3.utils.fromWei(balance, 'mwei'));
 
+            // ランク情報の取得を追加
+            const rankInfo = await contract.methods.getUserRank(userAddress).call();
+    document.getElementById('currentRank').textContent = rankInfo.rankName;
+    document.getElementById('bonusRate').textContent = (rankInfo.bonusRate / 100).toString();
+    document.getElementById('rankProgress').textContent = (rankInfo.progressToNextRank / 100).toFixed(2);
+
+
+
             // Get staked amount
             const staked = await contract.methods.deposits(userAddress).call();
             document.getElementById('stakedAmount').textContent = 
